@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: ../
+      dockerfile: build/Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - type: bind
+        source: ../
+        target: /app
+    environment:
+      - host=0.0.0.0:3000
+      - CGO_ENABLED=0
+      - GOOS=linux
+    command: go run main.go

@@ -1,0 +1,170 @@
+openapi: 3.0.3
+info:
+  title: nubank-authorizer
+  description: API to authorizer account transactions.
+  version: 1.0.0
+servers:
+  - url: localhost:3000
+    description: localhost
+paths:
+  /accounts:
+    post:
+      summary: Create an account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Account'
+            example:
+              account:
+                activeCard: true
+                availableLimit: 100
+      responses:
+        200:
+          description: Account created with success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                account:
+                  activeCard: true
+                  availableLimit: 100
+                violations: []
+        400:
+          description: Request with invalid json on payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                account:
+                  activeCard: false
+                  availableLimit: 0
+                violations: ["invalid-json"]
+        409:
+          description: Account already initialized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                account:
+                  activeCard: true
+                  availableLimit: 100
+                violations: ["account-already-initialized"]
+  /transactions:
+    post:
+      summary: New transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transaction'
+            example:
+              transaction:
+                merchant: "Burger King"
+                amount: 10
+                time: "2019-02-13T10:30:00.000Z"
+      responses:
+        200:
+          description: Transaction created with success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                account:
+                  activeCard: true
+                  availableLimit: 90
+                violations: []
+        400:
+          description: Request with invalid json.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                account:
+                  activeCard: false
+                  availableLimit: 0
+                violations: ["invalid-json"]
+        401:
+          description: No enough limit.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                account:
+                  activeCard: true
+                  availableLimit: 8
+                violations: ["insufficient-limit"]
+        404:
+          description: Account not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                account:
+                  activeCard: false
+                  availableLimit: 0
+                violations: ["account-not-found"]
+        406:
+          description: Active card is disabled.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                account:
+                  activeCard: false
+                  availableLimit: 0
+                violations: ["disabled-card"]
+        429:
+          description: High frequency in small interval
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+              example:
+                account:
+                  activeCard: true
+                  availableLimit: 50
+                violations: ["high-frequency-small-interval"]
+components:
+  schemas:
+    Account:
+      type: object
+      properties:
+        activeCard:
+          type: boolean
+          description: Indicates that the card is active or not.
+          default: false
+        availableLimit:
+          type: integer
+          description: Available limit available to acccount.
+          default: 0
+    Transaction:
+      type: object
+      properties:
+        merchant:
+          type: string
+          description: Merchant name
+        amount:
+          type: integer
+          description: Amount value
+        time:
+            type: string
+            format: date-time
+            description: date time of transaction.
+    Response:
+      type: object
+      properties:
+        account:
+          $ref: '#/components/schemas/Account'
+        violations:
+          type: array
+          items:
+            type: string
